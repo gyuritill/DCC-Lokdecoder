@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="../XSLT/decoder.xsl"?>
+<!-- Copyright (C) JMRI 2001, 2005, 2007, 2-009, 2010 All rights reserved -->
+<!--                                                                        -->
+<!-- JMRI is free software; you can redistribute it and/or modify it under  -->
+<!-- the terms of version 2 of the GNU General Public License as published  -->
+<!-- by the Free Software Foundation. See the "COPYING" file for a copy     -->
+<!-- of this license.                                                       -->
+<!--                                                                        -->
+<!-- JMRI is distributed in the hope that it will be useful, but WITHOUT    -->
+<!-- ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or  -->
+<!-- FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License  -->
+<!-- for more details.                                                      -->
+<decoder-config xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://jmri.org/xml/schema/decoder-4-15-2.xsd" showEmptyPanes="no">
+	<version author="Till György" version="1" lastUpdated="20210212"/> <!-- initial release -->
+	<decoder>
+		<family name="GTI" mfg="Public-domain and DIY" lowVersionID="1" highVersionID="10">
+			<model model="GTI green" numOuts="10" numFns="28" productID="258">
+				<output name="1" label="F0f" />
+				<output name="2" label="F0r" />
+				<output name="3" label="AUX1" />
+				<output name="4" label="AUX2" />
+				<output name="5" label="AUX3" />
+				<output name="6" label="AUX4" />
+				<output name="7" label="AUX5" />
+				<output name="8" label="AUX6" />
+				<output name="9" label="AUX7" />
+				<output name="10" label="AUX8" />
+			</model>
+		</family>
+		<programming direct="yes" paged="no" register="yes" ops="no"/>
+		<variables>
+			<xi:include href="http://jmri.org/xml/decoders/nmra/shortAndLongAddress.xml"/>
+			<xi:include href="http://jmri.org/xml/decoders/nmra/accelDecel_255.xml"/>
+			<xi:include href="http://jmri.org/xml/decoders/nmra/vStartHighMid.xml"/>
+			<xi:include href="http://jmri.org/xml/decoders/nmra/mfgVersionId.xml"/>
+			<variable item="Total PWM Period" CV="9">
+				<decVal/>
+				<label>Total PWM Period (Motor Drive Frequency)</label>
+				<label xml:lang="de">PWM Periode (Motorfrequenz)</label>
+			</variable>
+			<variable item="Packet Time-out Value" CV="11">
+				<decVal/>
+				<label>Packet Time-out Value</label>
+				<label xml:lang="de">Maximalzeit ohne Datenempfang</label>
+			</variable>
+			<variable item="User Id #3" CV="16" mask="XXXXXVVV" default="0">
+				<decVal/>
+				<label>Decoder Lock ID number</label>
+				<label xml:lang="it">ID Codice Blocco Decoder</label>
+				<label xml:lang="fr">No de verrouillage décodeur (Lock ID)</label>
+				<label xml:lang="de">Nummer der Decoder Lock ID</label>
+				<label xml:lang="cs">Zámek dekodéru ID číslo</label>
+				<label xml:lang="nl">Nummer van het Decoder Lock ID</label>
+			</variable>
+			<variable CV="27" mask="XXVXXXXX" item="Advanced Group 1 Option 4" default="1">
+				<xi:include href="http://jmri.org/xml/decoders/parts/enum-OffOn.xml"/>
+					<label>Brake on positive DC</label>
+					<label xml:lang="de">Bremsen bei positiver Gleichspannung</label>
+			</variable>
+			<variable CV="27" mask="XXXVXXXX" item="Advanced Group 1 Option 5" default="1">
+				<xi:include href="http://jmri.org/xml/decoders/parts/enum-OffOn.xml"/>
+					<label>Brake on negative DC</label>
+					<label xml:lang="de">Bremsen bei negativer Gleichspannung</label>
+			</variable>
+			<variable CV="27" mask="XXXXXVXX" item="Advanced Group 1 Option 6" default="1">
+				<xi:include href="http://jmri.org/xml/decoders/parts/enum-OffOn.xml"/>
+					<label>Brake on signal controlled influence</label>
+					<label xml:lang="de">Bremsen beim Signaleinfluss</label>
+			</variable>
+			<variable CV="27" mask="XXXXXXVX" item="Advanced Group 1 Option 7" default="1">
+				<xi:include href="http://jmri.org/xml/decoders/parts/enum-OffOn.xml"/>
+					<label>Brake on asymmetric DCC (left > right)</label>
+					<label xml:lang="de">Bremsen beim asymmetrischen DCC (Links > Rechts)</label>
+			</variable>
+			<variable CV="27" mask="XXXXXXXV" item="Advanced Group 1 Option 8" default="1">
+				<xi:include href="http://jmri.org/xml/decoders/parts/enum-OffOn.xml"/>
+					<label>Brake on asymmetric DCC (right > left)</label>
+					<label xml:lang="de">Bremsen beim asymmetrischen DCC (Rechts > Links)</label>
+			</variable>
+			<xi:include href="http://jmri.org/xml/decoders/nmra/cv29direction.xml"/>
+			<xi:include href="http://jmri.org/xml/decoders/nmra/cv29speedSteps.xml"/>
+			<xi:include href="http://jmri.org/xml/decoders/nmra/cv29table3-28.xml"/>
+			<!-- this next large group forms a table, so doesn't need translation -->
+			<xi:include href="http://jmri.org/xml/decoders/nmra/functionmap.xml"/>
+			<!-- end of table that doesn't need translation -->
+			<xi:include href="http://jmri.org/xml/decoders/nmra/kickStart.xml"/>
+			<xi:include href="http://jmri.org/xml/decoders/nmra/fwdTrim.xml"/>
+			<xi:include href="http://jmri.org/xml/decoders/nmra/cv67speedTableBasic.xml"/>
+			<xi:include href="http://jmri.org/xml/decoders/nmra/revTrim.xml"/>
+			<xi:include href="http://jmri.org/xml/decoders/nmra/userId.xml"/>
+		</variables>
+	</decoder>
+</decoder-config>
