@@ -15,10 +15,17 @@ DCC multifunction decoder for H0 locomotives
 - 4-layer PCB esigned in KiCAD
 - fairly standard components (available from Digi-Key, Farnell, Mouser, etc...)
 - hand solderable (I did it too)
-- 4 debug LEDs
+- 4 debug LEDs (red, yellow, green and blue)
+
+| ![top](KiCAD_project/Lokdecoder_TI_altQuartz/top_side.jpg) | ![bottom](KiCAD_project/Lokdecoder_TI_altQuartz/bottom_side.jpg) |
+| :---: | :---: |
+| top side | bottom side |
+
+
+
 ## Firmware
 - Arduino compatible programming (behaves like an UNO)
-- DCC decoding by [NMRA](https://github.com/mrrwa/NmraDcc)
+- DCC decoding by [NMRADCC](https://github.com/mrrwa/NmraDcc) library
 
 ## JMRI integration
 
