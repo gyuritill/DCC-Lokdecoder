@@ -40,7 +40,7 @@
 #define PWM_PERIOD 1
 
 #define CV_PACKET_TIMEOUT 11
-#define PACKET_TIMEOUT 100 // in 10 ms
+#define PACKET_TIMEOUT 100 // x 10ms
 #define CV_UNLOCK_NUMBER 15
 #define CV_LOCKING_NUMBER 16
 #define CV_AUTO_STOP_CONFIG 27
@@ -109,11 +109,11 @@ CVPair factoryDefaultCVs [] =
   {CV_VMID, MID_VOLTAGE },//CV6, (CV7, CV8 implicit in dcc.init())
   {CV_PWM_PERIOD, PWM_PERIOD},//CV9
   {CV_PACKET_TIMEOUT, PACKET_TIMEOUT},//CV11
-  {CV_UNLOCK_NUMBER, 0},
-  {CV_LOCKING_NUMBER, 0},
-  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, highByte(LONG_ADDRESS) + 0xC0},
-  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, lowByte(LONG_ADDRESS)},
-  {CV_AUTO_STOP_CONFIG, 0b00110011},//7,6: reserved, 5: DC+, 4: DC-, 3: unused, 2: Signal, 1: Asym left, 0: Asym right
+  {CV_UNLOCK_NUMBER, 0},//CV15
+  {CV_LOCKING_NUMBER, 0},//CV16
+  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, highByte(LONG_ADDRESS) + 0xC0}, //CV17
+  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, lowByte(LONG_ADDRESS)},         //CV18
+  {CV_AUTO_STOP_CONFIG, 0b00110011},//CV27 7,6: reserved, 5: DC+, 4: DC-, 3: unused, 2: Signal, 1: Asym left, 0: Asym right
   {CV_29_CONFIG, 0x00
   //| CV29_LOCO_DIR            // 0: normal direction, 1: reversed direction
   | CV29_F0_LOCATION           // 0: 14 speed steps, 1:28/128 speed steps
@@ -126,6 +126,7 @@ CVPair factoryDefaultCVs [] =
   //| CV29_OUTPUT_ADDRESS_MODE // 0: Decoder Address Mode, 1: Output Address Mode
   //| CV29_ACCESSORY_DECODER   // 0: Multi-Function Decoder Mode, 1: Accessory Decoder Mode
   },
+  //CVs33-46
   {CV_OUTPUT_LOCATION_F0f, 1},// 1:F0f, 2:F0r, 4:AUX1, 8:AUX2, 16:AUX3, 32:AUX4, 64:AUX5, 128:AUX6
   {CV_OUTPUT_LOCATION_F0r, 2},// 1:F0f, 2:F0r, 4:AUX1, 8:AUX2, 16:AUX3, 32:AUX4, 64:AUX5, 128:AUX6
   {CV_OUTPUT_LOCATION_F1, 4}, // 1:F0f, 2:F0r, 4:AUX1, 8:AUX2, 16:AUX3, 32:AUX4, 64:AUX5, 128:AUX6
@@ -140,12 +141,13 @@ CVPair factoryDefaultCVs [] =
   {CV_OUTPUT_LOCATION_F10, 0},// 1:AUX5, 2:AUX6, 4:AUX7, 8:AUX8
   {CV_OUTPUT_LOCATION_F11, 0},// 1:AUX5, 2:AUX6, 4:AUX7, 8:AUX8
   {CV_OUTPUT_LOCATION_F12, 0},// 1:AUX5, 2:AUX6, 4:AUX7, 8:AUX8
-  {CV_PRODUCT_ID+0, 0},  // product ID highest byte
-  {CV_PRODUCT_ID+1, 0},  // product ID high byte
-  {CV_PRODUCT_ID+2, 1},  // product ID low byte
-  {CV_PRODUCT_ID+3, 2},  // product ID lowest byte
-  {CV_KICK_START, 100},
-  {CV_FWD_TRIM, 128},
+  {CV_PRODUCT_ID+0, 0},  // CV47 product ID highest byte
+  {CV_PRODUCT_ID+1, 0},  // CV48 product ID high byte
+  {CV_PRODUCT_ID+2, 1},  // CV49 product ID low byte
+  {CV_PRODUCT_ID+3, 2},  // CV50 product ID lowest byte
+  {CV_KICK_START, 100},  // CV65
+  {CV_FWD_TRIM, 128},    // CV66
+  //CVs 67-94
   {CV_SPEED_MAP+0, 43},
   {CV_SPEED_MAP+1, 46},
   {CV_SPEED_MAP+2, 50},
@@ -174,9 +176,9 @@ CVPair factoryDefaultCVs [] =
   {CV_SPEED_MAP+25, 226},
   {CV_SPEED_MAP+26, 240},
   {CV_SPEED_MAP+27, 255},
-  {CV_REV_TRIM, 128},
-  {CV_USER_ID1, 42},
-  {CV_USER_ID2, 42},
+  {CV_REV_TRIM, 128}, //CV95
+  {CV_USER_ID1, 42},  //CV105
+  {CV_USER_ID2, 42},  //CV106
 };
 
 uint8_t factoryDefaultCVIndex = 0;
@@ -184,6 +186,8 @@ uint8_t factoryDefaultCVIndex = 0;
 uint8_t numSpeedSteps = SPEED_STEP_128;
 uint32_t lastFunctionState;
 uint32_t newFunctionState;
+uint16_t lastOutputState = 0;
+uint16_t newOutputState = 0;
 bool lastDirection;   // DCC_DIR_FWD(1): (a+/b-), DCC_DIR_REV(0): rev (a-/b+)
 bool newDirection;    // DCC_DIR_FWD(1): (a+/b-), DCC_DIR_REV(0): rev (a-/b+)
 bool actualDirection; // DCC_DIR_FWD(1): (a+/b-), DCC_DIR_REV(0): rev (a-/b+)
@@ -192,10 +196,10 @@ uint8_t newSpeed;     // 0-127, 0:EMCY stop, 1: normal stop, 2-127: drive
 uint8_t actualSpeed;
 uint8_t targetSpeed;
 uint8_t savedSpeed;
-uint16_t maxOCR;
 // timing for acceleration / deceleration
 uint32_t lastSpeedStep = 0;
 uint32_t newSpeedStep = 0;
+// timeout
 uint32_t packetTimeout;
 uint32_t lastPacket;
 // configuration variables
@@ -204,10 +208,16 @@ uint8_t vMid;
 uint8_t vHigh;
 uint8_t accRate;
 uint8_t decRate;
-uint8_t pwmPeriod;
+uint8_t pwmFreq;
+uint8_t fwdTrim;
+uint8_t revTrim;
+uint8_t kickStart;
 uint8_t functionMapping[14];
-uint8_t lastOutputState = 0;
-uint8_t newOutputState = 0;
+uint16_t maxOCR;
+uint8_t speedTable[28];
+uint8_t autoStop;
+uint8_t unlockNumber;
+uint8_t lockingNumber;
 
 void notifyCVResetFactoryDefault(){
 /*+
@@ -291,7 +301,7 @@ void notifyCVChange( uint16_t CV, uint8_t Value){
       vHigh = Value;
       break;
     case CV_PWM_PERIOD:
-      pwmPeriod = Value;
+      pwmFreq = Value;
       break;
     case CV_OUTPUT_LOCATION_F0f:
     case CV_OUTPUT_LOCATION_F0r:
@@ -309,6 +319,30 @@ void notifyCVChange( uint16_t CV, uint8_t Value){
     case CV_OUTPUT_LOCATION_F12:
       functionMapping[CV - CV_OUTPUT_LOCATION_F0f] = Value;
       break;
+    case CV_PACKET_TIMEOUT:
+      packetTimeout = 10 * Value;
+      break;
+    case CV_FWD_TRIM:
+      fwdTrim = Value;
+      break;
+    case CV_REV_TRIM:
+      revTrim = Value;
+      break;
+    case CV_KICK_START:
+      kickStart = Value;
+      break;
+    case CV_AUTO_STOP_CONFIG:
+      autoStop = Value;
+      break;
+    case CV_UNLOCK_NUMBER:
+      unlockNumber = Value;
+      break;
+    case CV_LOCKING_NUMBER:
+      lockingNumber = Value;
+      break;
+  }
+  if((CV >= CV_SPEED_MAP) && (CV <= (CV_SPEED_MAP+27))){
+    speedTable[CV - CV_SPEED_MAP] = Value;
   }
 }
 
@@ -537,30 +571,25 @@ void setup(){
   accRate = dcc.getCV(CV_ACC_RATE);
   decRate = dcc.getCV(CV_DEC_RATE);
   packetTimeout = 10*dcc.getCV(CV_PACKET_TIMEOUT);
-  pwmPeriod = dcc.getCV(CV_PWM_PERIOD);
+  fwdTrim = dcc.getCV(CV_FWD_TRIM);
+  revTrim = dcc.getCV(CV_REV_TRIM);
+  pwmFreq = dcc.getCV(CV_PWM_PERIOD);
+  kickStart = dcc.getCV(CV_KICK_START);
+  autoStop = dcc.getCV(CV_AUTO_STOP_CONFIG);
+  unlockNumber = dcc.getCV(CV_UNLOCK_NUMBER);
+  lockingNumber = dcc.getCV(CV_LOCKING_NUMBER);
+  // set up PWM timer
+  maxOCR = 8000 / constrain(pwmFreq, 1, 40);   // 1-40 kHz
   TCCR1A = _BV(COM1A1) | _BV(COM1A0) | _BV(COM1B1) | _BV(COM1B0);   // TIMER1 A and B invert PWM
   TCCR1B = _BV(WGM13) | _BV(CS10);      // TIMER1 prescaler=1, phase and frequency correct mode PWM, TOP=ICR1
-  switch(pwmPeriod){ //  f = 8 MHz / TOP
-    case 0:   // 40 kHz
-      maxOCR = 200;
-      break;
-    case 1:   // 35 kHz
-      maxOCR = 229;
-      break;
-    case 2:   // 30 kHz
-      maxOCR = 267;
-      break;
-    case 3:   // 25 kHz
-      maxOCR = 320;
-      break;
-    case 4:   // 20 kHz
-      maxOCR = 400;
-      break;
-  }
   ICR1 = maxOCR;
-  
+  // set up function to output mapping
   for(byte i=0;i<14;i++){
     functionMapping[i] = dcc.getCV(CV_OUTPUT_LOCATION_F0f + i);
+  }
+  // set up speed table
+  for(byte i=0;i<28;i++){
+    speedTable[i] = dcc.getCV(CV_SPEED_MAP + i);
   }
 }
 
@@ -654,10 +683,18 @@ void loop(){
     }
     if(actualDirection == DCC_DIR_FWD){    // DCC FWD
       OCR1B = 0;
-      OCR1A = map(actualSpeed, 0, 255, 0, maxOCR);
+      if(fwdTrim == 0){
+        OCR1A = (uint32_t)actualSpeed * (uint32_t)maxOCR / 255UL;
+      }else{
+        OCR1A = (uint32_t)actualSpeed * (uint32_t)maxOCR / 255UL * (uint32_t)fwdTrim / 128UL;
+      }
     }else{                // DCC REV
       OCR1A = 0;
-      OCR1B = map(actualSpeed, 0, 255, 0, maxOCR);
+      if(fwdTrim == 0){
+        OCR1B = (uint32_t)actualSpeed * (uint32_t)maxOCR / 255UL;
+      }else{
+        OCR1B = (uint32_t)actualSpeed * (uint32_t)maxOCR / 255UL * (uint32_t)revTrim / 128UL;
+      }
     }
     
   }
@@ -670,8 +707,14 @@ void loop(){
     }else{                    // F0r
       newOutputState |= (bitRead(newFunctionState, 0) ? functionMapping[1] : 0);
     }
-    for(byte i=1;i<=12;i++){  //F1-F12
+    for(byte i=1;i<=3;i++){  //F1-F3
       newOutputState |= (bitRead(newFunctionState, i) ? functionMapping[i+1] : 0);
+    }
+    for(byte i=4;i<=8;i++){  //F4-F8
+      newOutputState |= (bitRead(newFunctionState, i) ? functionMapping[i+1]<<3 : 0);
+    }
+    for(byte i=9;i<=12;i++){  //F9-F12
+      newOutputState |= (bitRead(newFunctionState, i) ? functionMapping[i+1]<<6 : 0);
     }
   }
 
@@ -682,6 +725,11 @@ void loop(){
     digitalWrite(LED_AUX1_PIN, bitRead(newOutputState, 2));
     digitalWrite(LED_AUX2_PIN, bitRead(newOutputState, 3));
     digitalWrite(LED_AUX3_PIN, bitRead(newOutputState, 4));
+    digitalWrite(LED_AUX4_PIN, bitRead(newOutputState, 5));
+    digitalWrite(LED_AUX5_PIN, bitRead(newOutputState, 6));
+    digitalWrite(LED_AUX6_PIN, bitRead(newOutputState, 7));
+    digitalWrite(LED_AUX7_PIN, bitRead(newOutputState, 8));
+    digitalWrite(LED_AUX8_PIN, bitRead(newOutputState, 9));
   }
   
   
