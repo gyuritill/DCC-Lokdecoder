@@ -25,9 +25,15 @@ DCC multifunction decoder for H0 locomotives
 
 ## Firmware
 - Arduino compatible programming (behaves like an UNO)
-- DCC decoding by [NMRADCC](https://github.com/mrrwa/NmraDcc) library
+- DCC decoding by [NmraDcc](https://github.com/mrrwa/NmraDcc) library
 
 ## JMRI integration
+
+pictures
+
+## Install guide
+
+reset to factory
 
 ## Todo list
 - [ ] CV15, CV16 decoder locking
