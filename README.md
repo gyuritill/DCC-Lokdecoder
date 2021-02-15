@@ -29,7 +29,9 @@ DCC multifunction decoder for H0 locomotives
 
 ## JMRI integration
 
-pictures
+| ![basic](KiCAD_project/Lokdecoder_TI_altQuartz/01_basic.jpg) | ![motor](KiCAD_project/Lokdecoder_TI_altQuartz/02_motor.jpg) | ![basic_speed](KiCAD_project/Lokdecoder_TI_altQuartz/03_basic_speed_control.jpg) | ![speed_table](KiCAD_project/Lokdecoder_TI_altQuartz/04_speed_table.jpg) | ![function_map](KiCAD_project/Lokdecoder_TI_altQuartz/05_function_map.jpg) | ![advanced](KiCAD_project/Lokdecoder_TI_altQuartz/06_advanced.jpg) |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| Basic  | Motor | Basic speed control | Speed table | Function map | Advanced |
 
 ## Install guide
 
