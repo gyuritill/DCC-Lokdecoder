@@ -57,7 +57,7 @@ DCC multifunction decoder for H0 locomotives
 | V+ | Positive common for function outputs (keep-alive capacitor positive) |
 | F0f | F0 function output forward (open drain) |
 | F0r | F0 function output reverse (open drain) |
-| AUXn | AUX function output n (open drain) |
+| 1-8 | AUX function output n (open drain) |
 | 5V | internal microcontroller +5V supply |
 | GND | ground (keep alive capacitor negative) |
 | SCK | ISP programming clock (connect to ISP SCK) |
