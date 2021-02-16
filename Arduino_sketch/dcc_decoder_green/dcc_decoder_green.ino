@@ -5,12 +5,7 @@
 //#define RESET_FACTORY_DEFAULTS
 
 // Uncomment any of the lines below to enable debug messages for different parts of the code
-//#define DEBUG_FUNCTIONS
-//#define DEBUG_SPEED
-//#define DEBUG_PWM
-//#define DEBUG_DCC_ACK
 //#define DEBUG_DCC_MSG
-//#define DEBUG_STATE
 
 #if defined(DEBUG_FUNCTIONS) or defined(DEBUG_SPEED) or defined(DEBUG_PWM) or defined(DEBUG_DCC_ACK) or defined(DEBUG_DCC_MSG) or defined(DEBUG_STATE)
 #define DEBUG_PRINT
@@ -365,17 +360,6 @@ void notifyDccSpeed(uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DI
  *  Returns:
  *    None
  */
-#ifdef DEBUG_SPEED
-  Serial.print("notifyDccSpeed: Addr: ");
-  Serial.print(Addr,DEC);
-  Serial.print( (AddrType == DCC_ADDR_SHORT) ? "-S" : "-L" );
-  Serial.print(" Speed: ");
-  Serial.print(Speed,DEC);
-  Serial.print(" Steps: ");
-  Serial.print(SpeedSteps,DEC);
-  Serial.print(" Dir: ");
-  Serial.println( (Dir == DCC_DIR_FWD) ? "Forward" : "Reverse" );
-#endif
   newDirection = Dir;
   newSpeed = Speed;
   numSpeedSteps = SpeedSteps;
@@ -402,14 +386,6 @@ void notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint
  *  Returns:
  *    None
  */
-#ifdef DEBUG_FUNCTIONS
-  Serial.print("notifyDccFunc: Addr: ");
-  Serial.print(Addr,DEC);
-  Serial.print( (AddrType == DCC_ADDR_SHORT) ? 'S' : 'L' );
-  Serial.print("  Function Group: ");
-  Serial.print(FuncGrp,DEC);
-#endif
-
   switch(FuncGrp){
     case FN_0_4:
       bitWrite(newFunctionState, 0, FuncState & FN_BIT_00);
@@ -417,30 +393,18 @@ void notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint
       bitWrite(newFunctionState, 2, FuncState & FN_BIT_02);
       bitWrite(newFunctionState, 3, FuncState & FN_BIT_03);
       bitWrite(newFunctionState, 4, FuncState & FN_BIT_04);
-#ifdef DEBUG_FUNCTIONS
-      Serial.print(" FN 0-4: ");
-      Serial.print(newFunctionState & 0x1F);
-#endif
       break;
     case FN_5_8:
       bitWrite(newFunctionState, 5, FuncState & FN_BIT_05);
       bitWrite(newFunctionState, 6, FuncState & FN_BIT_06);
       bitWrite(newFunctionState, 7, FuncState & FN_BIT_07);
       bitWrite(newFunctionState, 8, FuncState & FN_BIT_08);
-#ifdef DEBUG_FUNCTIONS
-      Serial.print(" FN 5-8: ");
-      Serial.print((newFunctionState >> 5) & 0xF);
-#endif
       break;
     case FN_9_12:
       bitWrite(newFunctionState, 9, FuncState & FN_BIT_09);
       bitWrite(newFunctionState, 10, FuncState & FN_BIT_10);
       bitWrite(newFunctionState, 11, FuncState & FN_BIT_11);
       bitWrite(newFunctionState, 12, FuncState & FN_BIT_12);
-#ifdef DEBUG_FUNCTIONS
-      Serial.print(" FN 9-12: ");
-      Serial.print((newFunctionState >> 9) & 0xF);
-#endif
       break;
     case FN_13_20:
       bitWrite(newFunctionState, 13, FuncState & FN_BIT_13);
@@ -451,10 +415,6 @@ void notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint
       bitWrite(newFunctionState, 18, FuncState & FN_BIT_18);
       bitWrite(newFunctionState, 19, FuncState & FN_BIT_19);
       bitWrite(newFunctionState, 20, FuncState & FN_BIT_20);
-#ifdef DEBUG_FUNCTIONS
-      Serial.print(" FN 13-20: ");
-      Serial.print((newFunctionState >> 13) & 0xFF);
-#endif
       break;
     case FN_21_28:
       bitWrite(newFunctionState, 21, FuncState & FN_BIT_21);
@@ -465,15 +425,8 @@ void notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint
       bitWrite(newFunctionState, 26, FuncState & FN_BIT_26);
       bitWrite(newFunctionState, 27, FuncState & FN_BIT_27);
       bitWrite(newFunctionState, 28, FuncState & FN_BIT_28);
-#ifdef DEBUG_FUNCTIONS
-      Serial.print(" FN 21-28: ");
-      Serial.print((newFunctionState >> 21) & 0xFF);
-#endif
       break;
   }
-#ifdef DEBUG_FUNCTIONS
-  Serial.println();
-#endif
 }
 
 #ifdef  DEBUG_DCC_MSG
@@ -512,16 +465,12 @@ void notifyCVAck(void){
  *  Returns:
  *    None
  */
-  static bool ackDir = true;
-  #ifdef DEBUG_DCC_ACK
-  Serial.println("notifyCVAck") ;
-  #endif
-  
-  digitalWrite(MOTOR_IN1_PIN, ackDir);
-  digitalWrite(MOTOR_IN2_PIN, !ackDir);
+  static bool ackDir = false;
+  OCR1A = ackDir ? maxOCR : 0;
+  OCR1B = ackDir ? 0 : maxOCR;
   delay(6);
-  digitalWrite(MOTOR_IN1_PIN, 1);
-  digitalWrite(MOTOR_IN2_PIN, 1);
+  OCR1A = 0;
+  OCR1B = 0;
   ackDir = !ackDir;
 }
 
@@ -579,7 +528,7 @@ void setup(){
   unlockNumber = dcc.getCV(CV_UNLOCK_NUMBER);
   lockingNumber = dcc.getCV(CV_LOCKING_NUMBER);
   // set up PWM timer
-  maxOCR = 8000 / constrain(pwmFreq, 1, 40);   // 1-40 kHz
+  maxOCR = (F_CPU / 2000) / constrain(pwmFreq, 1, 40);   // 1-40 kHz
   TCCR1A = _BV(COM1A1) | _BV(COM1A0) | _BV(COM1B1) | _BV(COM1B0);   // TIMER1 A and B invert PWM
   TCCR1B = _BV(WGM13) | _BV(CS10);      // TIMER1 prescaler=1, phase and frequency correct mode PWM, TOP=ICR1
   ICR1 = maxOCR;
@@ -633,14 +582,8 @@ void loop(){
       targetSpeed = actualSpeed = 0;
       OCR1A = 0;
       OCR1B = 0;
-#ifdef DEBUG_PWM
-      Serial.println("Emergency stop");
-#endif
     }else if(newSpeed == 1){              // Stop if speed = 1
       targetSpeed = 0;
-#ifdef DEBUG_PWM
-      Serial.println("Regular stop");
-#endif
     }else{                                // Calculate PWM value in the range 1..255   
       uint8_t vScF1;                      // start to mid
       uint8_t vScF2;                      // mid to high
